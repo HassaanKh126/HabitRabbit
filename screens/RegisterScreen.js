@@ -4,7 +4,7 @@ import { Image, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View }
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
-const Register = () => {
+const RegisterScreen = () => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
 
@@ -116,4 +116,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default Register;
+export default RegisterScreen;
