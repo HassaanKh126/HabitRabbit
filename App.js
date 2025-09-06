@@ -11,6 +11,7 @@ import RegisterScreen from "./screens/RegisterScreen";
 import SplashScreen from "./screens/SplashScreen";
 import MyHabitsScreen from "./screens/MyHabitsScreen";
 import CheckStatsScreen from "./screens/CheckStatsScreen";
+import RabbitShopScreen from "./screens/RabbitShopScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -24,6 +25,7 @@ const App = () => {
         <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="MyHabitsScreen" component={MyHabitsScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="CheckStatsScreen" component={CheckStatsScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="RabbitShopScreen" component={RabbitShopScreen} options={{ animation: 'fade' }} />
       </Stack.Navigator>
       <Toast config={{
         success: ({ text1, ...rest }) => (
@@ -37,8 +39,8 @@ const App = () => {
           </View>
         ),
         info: ({ text1, ...rest }) => (
-          <View style={{ padding: 14, backgroundColor: '#423d11', borderRadius: 10 }}>
-            <Text style={{ color: '#fff8f0', fontFamily: 'Fredoka-Medium' }}>{text1}</Text>
+          <View style={{ padding: 14, backgroundColor: '#3d3025', borderRadius: 10 }}>
+            <Text style={{ color: '#fff8f0', fontFamily: 'Fredoka-Medium', fontSize: 15 }}>{text1}</Text>
           </View>
         ),
       }} />
