@@ -55,6 +55,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: "#29211d"
     }
-})
+});
 
 export default SplashScreen;

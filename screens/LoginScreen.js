@@ -23,7 +23,7 @@ const LoginScreen = () => {
         }
         setLoading(true);
         try {
-            const response = await fetch("http://192.168.18.85:1000/api/login", {
+            const response = await fetch("http://localhost:1000/api/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"

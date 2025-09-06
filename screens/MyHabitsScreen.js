@@ -26,7 +26,7 @@ const MyHabitsScreen = () => {
             });
             return;
         }
-        setHabits(prev => [...prev, habitText]);
+        setHabits(prev => [...prev, { habit: habitText, completed: false, streak: 0, lastCompleted: null }]);
         setHabitText('');
         Toast.show({
             type: 'success',
@@ -61,14 +61,14 @@ const MyHabitsScreen = () => {
     }
 
     const handleEditOpen = (index) => {
-        setTextToEdit(habits[index]);
-        setActiveEditIndex(index)
+        setTextToEdit(habits[index].habit);
+        setActiveEditIndex(index);
         setModalVisible(true);
     }
 
     const handleEditHabit = () => {
         setModalVisible(false);
-        setHabits((prev) => prev.map((item, index) => index === activeEditIndex ? textToEdit : item));
+        setHabits((prev) => prev.map((item, index) => index === activeEditIndex ? { ...item, habit: textToEdit } : item));
     }
 
     return (
@@ -92,7 +92,7 @@ const MyHabitsScreen = () => {
                                 habits.map((habit, index) => {
                                     return (
                                         <View key={index} style={{ backgroundColor: "#3f342d", padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <Text style={{ color: "#fff8f0", fontFamily: "Fredoka-Medium", fontSize: 16 }}>{habit}</Text>
+                                            <Text style={{ color: "#fff8f0", fontFamily: "Fredoka-Medium", fontSize: 16 }}>{habit.habit}</Text>
                                             <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 15 }}>
                                                 <TouchableOpacity onPress={() => handleEditOpen(index)}>
                                                     <Feather name="edit-3" color={"#fff8f0"} size={20} />
