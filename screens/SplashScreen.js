@@ -28,7 +28,7 @@ const SplashScreen = () => {
             if (username) {
                 navigation.replace("HomeScreen");
             } else {
-                navigation.replace("LoginScreen");
+                navigation.replace("WelcomeScreen");
             }
         }, 2500);
     }

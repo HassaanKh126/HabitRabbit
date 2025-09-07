@@ -5,6 +5,7 @@ import { Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpa
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 const HomeScreen = () => {
     const insets = useSafeAreaInsets();
@@ -13,16 +14,34 @@ const HomeScreen = () => {
     const [username, setUsername] = useState("");
     const [habits, setHabits] = useState([]);
     const [carrots, setCarrots] = useState(0);
+    const [avatarImage, setAvatarImage] = useState();
 
+    const shopItems = [
+        { name: "Black Hoodie", cost: 10, image: require('../assets/rabbit/black_hoodie.png') },
+        { name: "Blue Hoodie", cost: 15, image: require('../assets/rabbit/blue_hoodie.png') },
+        { name: "Orange Hoodie", cost: 20, image: require('../assets/rabbit/orange_hoodie.png') },
+        { name: "Black Hoodie with Glasses", cost: 30, image: require('../assets/rabbit/black_hoodie_glasses.png') },
+        { name: "Blue Hoodie with Glasses", cost: 40, image: require('../assets/rabbit/blue_hoodie_glasses.png') },
+        { name: "Orange Hoodie with Glasses", cost: 50, image: require('../assets/rabbit/orange_hoodie_glasses.png') },
+        { name: "Golden Hoodie", cost: 60, image: require('../assets/rabbit/golden_hoodie.png') },
+        { name: "Golden Hoodie with Glasses", cost: 70, image: require('../assets/rabbit/golden_hoodie_glasses.png') },
+        { name: "Golden Hoodie with Crown", cost: 100, image: require('../assets/rabbit/golden_hoodie_crown.png') },
+    ]
 
     const getToken = async () => {
         const got_username = await AsyncStorage.getItem("rabbit_username");
         setUsername(got_username);
     }
 
-    useEffect(() => {
-        getToken();
-    }, []);
+    // useEffect(() => {
+    //     getToken();
+    // }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            getToken();
+        }, [])
+    );
 
     const getHabits = async () => {
         const gotHabits = await AsyncStorage.getItem('rabbit_habits');
@@ -132,19 +151,19 @@ const HomeScreen = () => {
         }
     }, [habits]);
 
-    // useEffect(() => {
-    //     const loadCarrots = async () => {
-    //         const stored = await AsyncStorage.getItem("rabbit_carrots");
-    //         setCarrots(stored ? parseInt(stored, 10) : 0);
-    //     };
-    //     loadCarrots();
-    // }, []);
-
     useFocusEffect(
         useCallback(() => {
             const loadCarrots = async () => {
                 const stored = await AsyncStorage.getItem("rabbit_carrots");
                 setCarrots(stored ? parseInt(stored, 10) : 0);
+
+                const avatar = await AsyncStorage.getItem("rabbit_avatar");
+                if (avatar) {
+                    const match = shopItems.find((it) => it.name === avatar);
+                    if (match) {
+                        setAvatarImage(match.image);
+                    }
+                }
             };
 
             loadCarrots();
@@ -164,24 +183,29 @@ const HomeScreen = () => {
         <View style={[styles.container, { paddingTop: insets.top + 10, paddingBottom: insets.bottom + 10 }]}>
             <StatusBar hidden />
             <View style={styles.secondContainer}>
-                <TouchableOpacity onPress={() => { navigation.navigate("RabbitShopScreen", { carrots }) }} style={{ position: 'absolute', top: 0, right: 0, display: 'flex', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#3f342d' }}>
-                    <Image source={require('../assets/carrot.png')} style={{ height: 18, width: 18 }} />
-                    <Text style={{ fontFamily: "Fredoka-SemiBold", color: "#fff8f0", fontSize: 16, marginRight: 5, marginLeft: 5 }}>{carrots}</Text>
-                </TouchableOpacity>
-                <Pressable onPress={() => { navigation.navigate("RabbitShopScreen", { carrots }) }}>
-                    <Image source={require('../assets/rabbit_elder.png')} style={{ height: 150, width: 150, alignSelf: 'center', marginBottom: 20 }} />
+                <View style={{ position: 'absolute', top: 0, right: 0, display: 'flex', flexDirection: "row", justifyContent: 'space-between', width: "100%", alignItems: 'center' }}>
+                    <TouchableOpacity onPress={() => { navigation.navigate("SettingsScreen") }}>
+                        <FontAwesome name="bars" size={24} color="#fff8f0" />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => { navigation.navigate("RabbitShopScreen", { carrots, avatarImage: avatarImage ? avatarImage : require('../assets/rabbit_elder.png') }) }} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#3f342d' }}>
+                        <Image source={require('../assets/carrot.png')} style={{ height: 18, width: 18 }} />
+                        <Text style={{ fontFamily: "Fredoka-SemiBold", color: "#fff8f0", fontSize: 16, marginRight: 5, marginLeft: 5 }}>{carrots}</Text>
+                    </TouchableOpacity>
+                </View>
+                <Pressable onPress={() => { navigation.navigate("RabbitShopScreen", { carrots, avatarImage: avatarImage ? avatarImage : require('../assets/rabbit_elder.png') }) }}>
+                    <Image source={avatarImage ? avatarImage : require('../assets/rabbit_elder.png')} style={{ height: 200, width: 200, alignSelf: 'center', marginBottom: 20 }} />
                 </Pressable>
                 {username && (
                     <View style={{ marginBottom: 20 }}>
                         <Text style={{ fontSize: 28, color: "#fff8f0", textAlign: "center", fontFamily: "Fredoka-Medium", letterSpacing: 0.5 }}>Hi, <Text style={{ fontFamily: "Fredoka-SemiBold" }}>{username}</Text>.</Text>
-                        <Text style={{ fontSize: 12, color: "#fff8f0", textAlign: 'center', fontFamily: "Fredoka-Regular" }}>"Consistency is the key to success"</Text>
+                        <Text style={{ fontSize: 12, color: "#fff8f0", textAlign: 'center', fontFamily: "Fredoka-Regular" }}>"Consistency is the key to success."</Text>
                     </View>
                 )}
                 <View style={{ maxHeight: 250 }}>
                     <ScrollView contentContainerStyle={{ backgroundColor: "#302722", display: 'flex', flexDirection: 'column', gap: 5, padding: 15 }} style={{ borderRadius: 15 }} showsVerticalScrollIndicator={false}>
                         {habits.length > 0 ? habits.map((habit, index) => {
                             return (
-                                <View key={index} style={{ backgroundColor: "#3f342d", padding: 12, borderRadius: 10, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <View key={index} style={{ backgroundColor: "#3f342d", padding: 10, borderRadius: 10, display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                                     <View style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                                         <View style={{ paddingHorizontal: 10, paddingVertical: 8, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: "#544740", borderRadius: 10 }}>
                                             <SimpleLineIcons name="fire" color={"#fff8f0"} size={16} style={{ textShadowRadius: 4, textShadowColor: "#fff8f0" }} />
@@ -209,7 +233,7 @@ const HomeScreen = () => {
                 <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 7 }} activeOpacity={0.6} onPress={() => { navigation.navigate("CheckStatsScreen") }}>
                     <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>Stats</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 10 }} activeOpacity={0.6} onPress={() => { navigation.navigate("RabbitShopScreen", { carrots }) }}>
+                <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 10 }} activeOpacity={0.6} onPress={() => { navigation.navigate("RabbitShopScreen", { carrots, avatarImage: avatarImage ? avatarImage : require('../assets/rabbit_elder.png') }) }}>
                     <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>Shop</Text>
                 </TouchableOpacity>
             </View>
