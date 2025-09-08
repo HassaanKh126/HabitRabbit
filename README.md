@@ -7,8 +7,9 @@ Habit Rabbit is an app that helps build habits in a fun and productive way.
 You build habits and on completing the habits you get points (carrots) which can be used for the rabbit.
 
 ## Features
-- User Authentication to keep your data synced across devices.
 - Build Habits in a fun and productive way.
+- Earn carrots by completing your daily habits.
+- Spend your carrots in the rabbit shop.
 
 ## Installation
 1. Initialize a new React Native project:
