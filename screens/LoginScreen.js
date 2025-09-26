@@ -4,6 +4,7 @@ import { CommonActions, useNavigation } from "@react-navigation/native";
 import { KeyboardAvoidingView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { BURL } from "@env";
 
 const LoginScreen = () => {
     const insets = useSafeAreaInsets();
@@ -14,6 +15,8 @@ const LoginScreen = () => {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
+        console.log(BURL);
+
         if (!email || !password) {
             Toast.show({
                 type: 'error',
@@ -23,7 +26,7 @@ const LoginScreen = () => {
         }
         setLoading(true);
         try {
-            const response = await fetch('http://192.168.18.85:1000/api/login', {
+            const response = await fetch(`${BURL}/api/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
