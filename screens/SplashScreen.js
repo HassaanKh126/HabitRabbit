@@ -28,7 +28,8 @@ const SplashScreen = () => {
             if (username) {
                 navigation.replace("HomeScreen");
             } else {
-                navigation.replace("WelcomeScreen");
+                // navigation.replace("WelcomeScreen");
+                navigation.replace("OnboardingScreen");
             }
         }, 2500);
     }

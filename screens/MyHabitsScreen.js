@@ -8,17 +8,25 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import Feather from "react-native-vector-icons/Feather";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 
-const MyHabitsScreen = () => {
+const MyHabitsScreen = ({ route }) => {
     const insets = useSafeAreaInsets();
     const navigation = useNavigation();
+
+    const { username } = route.params;
 
     const [habitText, setHabitText] = useState("");
     const [habits, setHabits] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [textToEdit, setTextToEdit] = useState("");
     const [activeEditIndex, setActiveEditIndex] = useState("");
+    const [status, setStatus] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [editLoading, setEditLoading] = useState(false);
 
-    const handleHabitSubmit = () => {
+    const [toDeleteIndex, setToDeleteIndex] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+
+    const handleHabitSubmit = async () => {
         if (habitText.trim() === "") {
             Toast.show({
                 type: 'error',
@@ -26,12 +34,43 @@ const MyHabitsScreen = () => {
             });
             return;
         }
-        setHabits(prev => [...prev, { habit: habitText, completed: false, streak: 0, lastCompleted: null }]);
-        setHabitText('');
-        Toast.show({
-            type: 'success',
-            text1: 'Habit added successfully.'
-        });
+        if (status === 'offline') {
+            setHabits(prev => [...prev, { habit: habitText, completed: false, streak: 0, lastCompleted: null }]);
+            setHabitText('');
+            Toast.show({
+                type: 'success',
+                text1: 'Habit added successfully.'
+            });
+        }
+        if (status === 'online') {
+            setLoading(true)
+            try {
+                const response = await fetch(`${BURL}/api/add-habit`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ username, habit: habitText, completed: false, streak: 0, lastCompleted: null })
+                });
+                const data = await response.json();
+                if (data.success === true) {
+                    setHabits(prev => [...prev, data.habit]);
+                    setHabitText('');
+                    Toast.show({
+                        type: 'success',
+                        text1: 'Habit added successfully.'
+                    });
+                }
+            } catch (error) {
+                console.log(error);
+                Toast.show({
+                    type: 'error',
+                    text1: 'An error occurred.'
+                });
+            } finally {
+                setLoading(false);
+            }
+        }
     }
 
     const getHabits = async () => {
@@ -43,8 +82,17 @@ const MyHabitsScreen = () => {
         }
     }
 
+    const getStatus = async () => {
+        const token = await AsyncStorage.getItem("rabbit_token");
+        if (token) {
+            setStatus("online");
+        } else {
+            setStatus("offline");
+        }
+    }
 
     useEffect(() => {
+        getStatus();
         getHabits();
     }, []);
 
@@ -56,8 +104,40 @@ const MyHabitsScreen = () => {
         handleChangeHabits();
     }, [habits]);
 
-    const handleRemoveHabit = (index) => {
-        setHabits(prev => prev.filter((_, i) => i !== index));
+    const handleRemoveHabit = async (index) => {
+        if (status === 'offline') {
+            setHabits(prev => prev.filter((_, i) => i !== index));
+        }
+        if (status === 'online') {
+            setDeleteLoading(true);
+            setToDeleteIndex(index);
+            try {
+                const response = await fetch(`${BURL}/api/delete-habit`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ habitId: habits[index]._id })
+                });
+                const data = await response.json();
+                if (data.success === true) {
+                    setHabits(prev => prev.filter((_, i) => i !== index));
+                    Toast.show({
+                        type: 'success',
+                        text1: "Habit Deleted."
+                    })
+                }
+            } catch (error) {
+                console.log(error);
+                Toast.show({
+                    type: 'error',
+                    text1: 'An error occurred.'
+                });
+            } finally {
+                setToDeleteIndex(null);
+                setDeleteLoading(false);
+            }
+        }
     }
 
     const handleEditOpen = (index) => {
@@ -66,9 +146,36 @@ const MyHabitsScreen = () => {
         setModalVisible(true);
     }
 
-    const handleEditHabit = () => {
+    const handleEditHabit = async () => {
+        if (status === 'offline') {
+            setHabits((prev) => prev.map((item, index) => index === activeEditIndex ? { ...item, habit: textToEdit } : item));
+        }
+        if (status === 'online') {
+            setEditLoading(true)
+            try {
+                const response = await fetch(`${BURL}/api/edit-habit`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ habitId: habits[activeEditIndex]._id, newHabitText: textToEdit })
+                });
+                const data = await response.json();
+                if (data.success === true) {
+                    setHabits((prev) => prev.map((item, index) => index === activeEditIndex ? { ...item, habit: textToEdit } : item));
+                }
+
+            } catch (error) {
+                console.log(error);
+                Toast.show({
+                    type: 'error',
+                    text1: 'An error occurred.'
+                });
+            } finally {
+                setEditLoading(false);
+            }
+        }
         setModalVisible(false);
-        setHabits((prev) => prev.map((item, index) => index === activeEditIndex ? { ...item, habit: textToEdit } : item));
     }
 
     return (
@@ -83,7 +190,7 @@ const MyHabitsScreen = () => {
                 </View>
                 <View style={{ marginTop: 20 }}>
                     <TextInput placeholder="Add Habit..." placeholderTextColor={"#fff8f08a"} style={{ color: "#fff8f0", backgroundColor: "#29211d", padding: 10, borderWidth: 1, borderColor: "#fff8f0", borderRadius: 10, fontFamily: "Fredoka-Regular" }} value={habitText} onChangeText={setHabitText} />
-                    <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, marginVertical: 10, alignItems: 'center' }} activeOpacity={0.7} onPress={handleHabitSubmit}>
+                    <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, marginVertical: 10, alignItems: 'center', opacity: loading ? 0.7 : 1 }} activeOpacity={0.7} disabled={loading} onPress={handleHabitSubmit}>
                         <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>Add Habit</Text>
                     </TouchableOpacity>
                     <View style={{ height: "85%", marginTop: 10 }}>
@@ -97,7 +204,7 @@ const MyHabitsScreen = () => {
                                                 <TouchableOpacity onPress={() => handleEditOpen(index)}>
                                                     <Feather name="edit-3" color={"#fff8f0"} size={20} />
                                                 </TouchableOpacity>
-                                                <TouchableOpacity onPress={() => { handleRemoveHabit(index) }}>
+                                                <TouchableOpacity onPress={() => { handleRemoveHabit(index) }} disabled={deleteLoading && index === toDeleteIndex} style={{ opacity: (deleteLoading && index === toDeleteIndex) ? 0.4 : 1 }}>
                                                     <Feather name="x-circle" color={"#fff8f0"} size={20} />
                                                 </TouchableOpacity>
                                             </View>
@@ -123,7 +230,7 @@ const MyHabitsScreen = () => {
                             </TouchableOpacity>
                         </View>
                         <TextInput placeholder="Edit Habit..." placeholderTextColor={"#fff8f08a"} style={{ color: "#fff8f0", backgroundColor: "#29211d", padding: 10, borderWidth: 1, borderColor: "#fff8f0", borderRadius: 10, fontFamily: "Fredoka-Regular" }} value={textToEdit} onChangeText={setTextToEdit} />
-                        <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, marginTop: 10, alignItems: 'center' }} activeOpacity={0.7} onPress={handleEditHabit}>
+                        <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, marginTop: 10, alignItems: 'center', opacity: editLoading ? 0.7 : 1 }} activeOpacity={0.7} disabled={editLoading} onPress={handleEditHabit}>
                             <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>Edit Habit</Text>
                         </TouchableOpacity>
                     </View>

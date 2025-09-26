@@ -12,6 +12,10 @@ import CheckStatsScreen from "./screens/CheckStatsScreen";
 import RabbitShopScreen from "./screens/RabbitShopScreen";
 import WelcomeScreen from "./screens/WelcomeScreen";
 import SettingsScreen from "./screens/SettingsScreen";
+import OnboardingScreen from "./screens/OnboardingScreen";
+import LoginScreen from "./screens/LoginScreen";
+import RegisterScreen from "./screens/RegisterScreen";
+import LeaderboardScreen from "./screens/LeaderboardScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -20,12 +24,16 @@ const App = () => {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="SplashScreen" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="SplashScreen" component={SplashScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="OnboardingScreen" component={OnboardingScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="LoginScreen" component={LoginScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="RegisterScreen" component={RegisterScreen} options={{ animation: 'fade_from_bottom' }} />
         <Stack.Screen name="WelcomeScreen" component={WelcomeScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="MyHabitsScreen" component={MyHabitsScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="CheckStatsScreen" component={CheckStatsScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="RabbitShopScreen" component={RabbitShopScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="SettingsScreen" component={SettingsScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="LeaderboardScreen" component={LeaderboardScreen} options={{ animation: 'fade' }} />
       </Stack.Navigator>
       <Toast config={{
         success: ({ text1, ...rest }) => (

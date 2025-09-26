@@ -5,7 +5,8 @@ import { Image, Pressable, ScrollView, StatusBar, StyleSheet, Text, TouchableOpa
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import SimpleLineIcons from "react-native-vector-icons/SimpleLineIcons";
-import FontAwesome from "react-native-vector-icons/FontAwesome";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import Toast from "react-native-toast-message";
 
 const HomeScreen = () => {
     const insets = useSafeAreaInsets();
@@ -15,15 +16,16 @@ const HomeScreen = () => {
     const [habits, setHabits] = useState([]);
     const [carrots, setCarrots] = useState(0);
     const [avatarImage, setAvatarImage] = useState();
+    const [status, setStatus] = useState('');
 
     const shopItems = [
         { name: "Black Hoodie", cost: 10, image: require('../assets/rabbit/black_hoodie.png') },
         { name: "Blue Hoodie", cost: 15, image: require('../assets/rabbit/blue_hoodie.png') },
         { name: "Orange Hoodie", cost: 20, image: require('../assets/rabbit/orange_hoodie.png') },
-        { name: "Black Hoodie with Glasses", cost: 30, image: require('../assets/rabbit/black_hoodie_glasses.png') },
-        { name: "Blue Hoodie with Glasses", cost: 40, image: require('../assets/rabbit/blue_hoodie_glasses.png') },
+        { name: "Black Hoodie with Glasses", cost: 40, image: require('../assets/rabbit/black_hoodie_glasses.png') },
+        { name: "Blue Hoodie with Glasses", cost: 45, image: require('../assets/rabbit/blue_hoodie_glasses.png') },
         { name: "Orange Hoodie with Glasses", cost: 50, image: require('../assets/rabbit/orange_hoodie_glasses.png') },
-        { name: "Golden Hoodie", cost: 60, image: require('../assets/rabbit/golden_hoodie.png') },
+        { name: "Golden Hoodie", cost: 65, image: require('../assets/rabbit/golden_hoodie.png') },
         { name: "Golden Hoodie with Glasses", cost: 70, image: require('../assets/rabbit/golden_hoodie_glasses.png') },
         { name: "Golden Hoodie with Crown", cost: 100, image: require('../assets/rabbit/golden_hoodie_crown.png') },
     ]
@@ -33,9 +35,24 @@ const HomeScreen = () => {
         setUsername(got_username);
     }
 
-    // useEffect(() => {
-    //     getToken();
-    // }, []);
+    const getStatus = async () => {
+        const token = await AsyncStorage.getItem("rabbit_token");
+        if (token) {
+            setStatus('online');
+        } else {
+            setStatus('offline');
+        }
+    }
+
+    useEffect(() => {
+        getStatus();
+    }, []);
+
+    useEffect(() => {
+        if (status) {
+            getHabits();
+        }
+    }, [status]);
 
     useFocusEffect(
         useCallback(() => {
@@ -44,90 +61,131 @@ const HomeScreen = () => {
     );
 
     const getHabits = async () => {
-        const gotHabits = await AsyncStorage.getItem('rabbit_habits');
-        let parsedHabits = JSON.parse(gotHabits) || [];
+        if (status === 'offline') {
+            const gotHabits = await AsyncStorage.getItem('rabbit_habits');
+            let parsedHabits = JSON.parse(gotHabits) || [];
 
-        const today = new Date().toDateString();
+            const today = new Date().toDateString();
 
-        parsedHabits = parsedHabits.map((habit) => {
-            const lastDate = habit.lastCompleted
-                ? new Date(habit.lastCompleted).toDateString()
-                : null;
+            parsedHabits = parsedHabits.map((habit) => {
+                const lastDate = habit.lastCompleted
+                    ? new Date(habit.lastCompleted).toDateString()
+                    : null;
 
-            if (habit.completed && lastDate !== today) {
-                return { ...habit, completed: false };
-            }
-
-            if (lastDate && lastDate !== today) {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-
-                if (lastDate !== yesterday.toDateString()) {
-                    return { ...habit, completed: false, streak: 0 };
+                if (habit.completed && lastDate !== today) {
+                    return { ...habit, completed: false };
                 }
+
+                if (lastDate && lastDate !== today) {
+                    const yesterday = new Date();
+                    yesterday.setDate(yesterday.getDate() - 1);
+
+                    if (lastDate !== yesterday.toDateString()) {
+                        return { ...habit, completed: false, streak: 0 };
+                    }
+                }
+
+                return habit;
+            });
+
+            setHabits(parsedHabits);
+        }
+        if (status === 'online') {
+            const response = await fetch(`${BURL}/api/habits`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username })
+            });
+            const data = await response.json();
+            console.log(data);
+
+            if (data.success === true) {
+                setHabits(data.habits);
             }
-
-            return habit;
-        });
-
-        setHabits(parsedHabits);
+        }
     };
 
     useFocusEffect(
         useCallback(() => {
-            getHabits();
-        }, [])
+            if (status) {
+                getHabits();
+            }
+        }, [status])
     );
 
-    const handleToggleHabit = (index) => {
-        setHabits((prevHabits) =>
-            prevHabits.map((habit, i) => {
-                if (i !== index) return habit;
+    const handleToggleHabit = async (index) => {
+        if (status === "offline") {
+            setHabits((prevHabits) =>
+                prevHabits.map((habit, i) => {
+                    if (i !== index) return habit;
 
-                const today = new Date().toDateString();
-                let newStreak = habit.streak;
-                let carrotReward = 0;
+                    const today = new Date().toDateString();
+                    let newStreak = habit.streak;
+                    let carrotReward = 0;
 
-                if (!habit.completed) {
-                    carrotReward = 2;
+                    if (!habit.completed) {
+                        carrotReward = 2;
 
-                    if (habit.lastCompleted) {
-                        const lastDate = new Date(habit.lastCompleted).toDateString();
+                        if (habit.lastCompleted) {
+                            const lastDate = new Date(habit.lastCompleted).toDateString();
 
-                        if (lastDate === today) {
-                            newStreak = habit.streak;
-                        } else {
-                            const yesterday = new Date();
-                            yesterday.setDate(yesterday.getDate() - 1);
-
-                            if (lastDate === yesterday.toDateString()) {
-                                newStreak = habit.streak + 1;
-                                carrotReward += 2;
+                            if (lastDate === today) {
+                                newStreak = habit.streak;
                             } else {
-                                newStreak = 1;
-                            }
-                        }
-                    } else {
-                        newStreak = 1;
-                    }
-                    updateCarrots(carrotReward);
-                }
+                                const yesterday = new Date();
+                                yesterday.setDate(yesterday.getDate() - 1);
 
-                return {
-                    ...habit,
-                    completed: !habit.completed,
-                    streak: newStreak,
-                    lastCompleted: !habit.completed ? new Date().toISOString() : habit.lastCompleted
-                };
-            })
-        );
-    }
+                                if (lastDate === yesterday.toDateString()) {
+                                    newStreak = habit.streak + 1;
+                                    carrotReward += 2;
+                                } else {
+                                    newStreak = 1;
+                                }
+                            }
+                        } else {
+                            newStreak = 1;
+                        }
+                        updateCarrots(carrotReward);
+                    }
+
+                    return {
+                        ...habit,
+                        completed: !habit.completed,
+                        streak: newStreak,
+                        lastCompleted: !habit.completed ? new Date().toISOString() : habit.lastCompleted
+                    };
+                })
+            );
+        } else if (status === "online") {
+            try {
+                const habitId = habits[index]._id;
+                const response = await fetch(`${BURL}/api/habits-toggle`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ habitId }),
+                });
+                const data = await response.json();
+                if (data.success === true) {
+                    getHabits();
+                }
+            } catch (err) {
+                console.error("Error toggling habit online:", err);
+                Toast.show({
+                    type: 'error',
+                    text1: 'An error occurred.'
+                })
+            }
+        }
+    };
 
     useEffect(() => {
         const handleHabits = async () => {
             await AsyncStorage.setItem("rabbit_habits", JSON.stringify(habits));
         }
-
         handleHabits();
     }, [habits]);
 
@@ -185,7 +243,7 @@ const HomeScreen = () => {
             <View style={styles.secondContainer}>
                 <View style={{ position: 'absolute', top: 0, right: 0, display: 'flex', flexDirection: "row", justifyContent: 'space-between', width: "100%", alignItems: 'center' }}>
                     <TouchableOpacity onPress={() => { navigation.navigate("SettingsScreen") }}>
-                        <FontAwesome name="bars" size={24} color="#fff8f0" />
+                        <Ionicons name="settings-outline" size={24} color="#fff8f0" />
                     </TouchableOpacity>
                     <TouchableOpacity onPress={() => { navigation.navigate("RabbitShopScreen", { carrots, avatarImage: avatarImage ? avatarImage : require('../assets/rabbit_elder.png') }) }} style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: '#3f342d' }}>
                         <Image source={require('../assets/carrot.png')} style={{ height: 18, width: 18 }} />
@@ -201,7 +259,7 @@ const HomeScreen = () => {
                         <Text style={{ fontSize: 12, color: "#fff8f0", textAlign: 'center', fontFamily: "Fredoka-Regular" }}>"Consistency is the key to success."</Text>
                     </View>
                 )}
-                <View style={{ maxHeight: 250 }}>
+                <View style={{ maxHeight: 200 }}>
                     <ScrollView contentContainerStyle={{ backgroundColor: "#302722", display: 'flex', flexDirection: 'column', gap: 5, padding: 15 }} style={{ borderRadius: 15 }} showsVerticalScrollIndicator={false}>
                         {habits.length > 0 ? habits.map((habit, index) => {
                             return (
@@ -227,7 +285,7 @@ const HomeScreen = () => {
                         )}
                     </ScrollView>
                 </View>
-                <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 7, marginTop: 20 }} activeOpacity={0.6} onPress={() => { navigation.navigate("MyHabitsScreen") }}>
+                <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 7, marginTop: 20 }} activeOpacity={0.6} onPress={() => { navigation.navigate("MyHabitsScreen", { username }) }}>
                     <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>My Habits</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 7 }} activeOpacity={0.6} onPress={() => { navigation.navigate("CheckStatsScreen") }}>
@@ -235,6 +293,9 @@ const HomeScreen = () => {
                 </TouchableOpacity>
                 <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 10 }} activeOpacity={0.6} onPress={() => { navigation.navigate("RabbitShopScreen", { carrots, avatarImage: avatarImage ? avatarImage : require('../assets/rabbit_elder.png') }) }}>
                     <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>Shop</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ backgroundColor: "#1c1815", padding: 12, borderRadius: 12, alignItems: "center", marginBottom: 10 }} activeOpacity={0.6} onPress={() => { navigation.navigate("LeaderboardScreen", { status }) }}>
+                    <Text style={{ fontFamily: "Fredoka-Medium", color: "#fff8f0", fontSize: 15 }}>Leaderboard</Text>
                 </TouchableOpacity>
             </View>
         </View>

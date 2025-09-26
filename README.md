@@ -70,3 +70,7 @@ You build habits and on completing the habits you get points (carrots) which can
 
 ## AI Usage
 Little to no AI use. Only used it for when i had a really hard bug, which was around 1 to 2 times. 5 to 6 percent AI usage i'll say, including the images etc.
+
+
+## NEW FEATURES:
+- Leaderboard.
